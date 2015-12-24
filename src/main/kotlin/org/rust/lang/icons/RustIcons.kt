@@ -42,7 +42,12 @@ fun Icon.addTestMark(): Icon {
 
 fun Icon.addVisibilityIcon(pub: Boolean): RowIcon {
     val visibility = if (pub) PsiUtil.ACCESS_LEVEL_PUBLIC else PsiUtil.ACCESS_LEVEL_PRIVATE
-    val icon = RowIcon(this, EmptyIcon.create(PlatformIcons.PUBLIC_ICON))
-    VisibilityIcons.setVisibilityIcon(visibility, icon);
-    return icon;
+    val rowIcon = RowIcon(2)
+
+    listOf(this, EmptyIcon.create(PlatformIcons.PUBLIC_ICON)).forEachIndexed { i, icon ->
+        rowIcon.setIcon(icon, i)
+    }
+
+    VisibilityIcons.setVisibilityIcon(visibility, rowIcon);
+    return rowIcon;
 }

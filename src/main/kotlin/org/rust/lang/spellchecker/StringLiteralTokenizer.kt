@@ -5,16 +5,16 @@ import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl
 import com.intellij.spellchecker.inspections.PlainTextSplitter
 import com.intellij.spellchecker.tokenizer.EscapeSequenceTokenizer
 import com.intellij.spellchecker.tokenizer.TokenConsumer
+import com.intellij.spellchecker.tokenizer.Tokenizer
 
-class StringLiteralTokenizer : EscapeSequenceTokenizer<LeafPsiElement>() {
+class StringLiteralTokenizer : Tokenizer<LeafPsiElement>() {
 
     override fun tokenize(element: LeafPsiElement, consumer: TokenConsumer) {
-        val text = element.text
-
-        if ("\\" !in text) {
-            consumer.consumeToken(element, PlainTextSplitter.getInstance())
-        } else {
-            processTextWithEscapeSequences(element, text, consumer)
+        element.text.let {
+            when ("\\" !in it) {
+                true -> consumer.consumeToken(element, PlainTextSplitter.getInstance())
+                else -> processTextWithEscapeSequences(element, it, consumer)
+            }
         }
     }
 
@@ -22,9 +22,10 @@ class StringLiteralTokenizer : EscapeSequenceTokenizer<LeafPsiElement>() {
         fun processTextWithEscapeSequences(element: LeafPsiElement, text: String, consumer: TokenConsumer) {
             val unescapedText = StringBuilder()
             val offsets = IntArray(text.length + 1)
+
             PsiLiteralExpressionImpl.parseStringCharacters(text, unescapedText, offsets)
 
-            processTextWithOffsets(element, consumer, unescapedText, offsets, 1)
+            EscapeSequenceTokenizer.processTextWithOffsets(element, consumer, unescapedText, offsets, 1)
         }
     }
 }

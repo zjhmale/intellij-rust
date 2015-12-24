@@ -124,13 +124,19 @@ class RustSdkType : SdkType("Rust SDK") {
                             "DYLD_LIBRARY_PATH" to sdkLibraryPath,
                             "LD_LIBRARY_PATH"   to sdkLibraryPath
                         ))
-                        .withExePath(rustc.absolutePath)
-                        .withParameters("-C rpath", "--version")
+                        .let {
+                            it.exePath = rustc.absolutePath
+                            it.addParameters("-C rpath", "--version")
+                            it
+                        }
                 } else {
                     GeneralCommandLine()
                         .withWorkDirectory(sdkHome)
-                        .withExePath(rustc.absolutePath)
-                        .withParameters("--version")
+                        .let {
+                            it.exePath = rustc.absolutePath
+                            it.addParameters("--version")
+                            it
+                        }
                 }
 
             val procOut = CapturingProcessHandler(cmd.createProcess()).runProcess(10 * 1000)
