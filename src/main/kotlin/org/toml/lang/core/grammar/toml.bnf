@@ -2,6 +2,7 @@
 // Work on the grammar is done here https://github.com/toml-lang/toml/pull/236/
 {
     parserClass="org.toml.lang.core.parser.TomlParser"
+    parserUtilClass="org.toml.lang.core.parser.util.TomlParserUtil"
 
     extends="com.intellij.extapi.psi.ASTWrapperPsiElement"
 

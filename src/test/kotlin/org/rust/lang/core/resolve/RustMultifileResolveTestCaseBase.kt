@@ -20,9 +20,6 @@ abstract class RustMultiFileResolveTestCaseBase : RustResolveTestCaseBase() {
 
             override fun getModuleType(): ModuleType<*> = moduleType
 
-            override fun createMainModule(project: Project): Module {
-                return super.createMainModule(project)
-            }
         }
     }
 

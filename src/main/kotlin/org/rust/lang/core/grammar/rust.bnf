@@ -1,6 +1,6 @@
 {
     parserClass='org.rust.lang.core.parser.RustParser'
-    parserUtilClass="org.rust.lang.core.parser.RustParserUtil"
+    parserUtilClass="org.rust.lang.core.parser.util.RustParserUtil"
 
     implements='org.rust.lang.core.psi.RustCompositeElement'
     extends='org.rust.lang.core.psi.impl.RustCompositeElementImpl'
