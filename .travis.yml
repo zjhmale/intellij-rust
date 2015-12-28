@@ -1,4 +1,5 @@
 language: java
+script: ./gradlew --debug --stacktrace check
 jdk:
   - oraclejdk8
 
