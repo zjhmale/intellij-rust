@@ -439,8 +439,8 @@ pat_uniq        ::= BOX pat
 pat_ident       ::= pat_binding [ AT pat ]
 
 
-pat_struct      ::= path_expr LBRACE pat_struct_fields RBRACE
-pat_enum        ::= path_expr LPAREN (DOTDOT | pat_tup_elts) RPAREN
+pat_struct      ::= path_expr LBRACE pat_struct_fields RBRACE       { pin = 'LBRACE' }
+pat_enum        ::= path_expr LPAREN (DOTDOT | pat_tup_elts) RPAREN { pin = 'LPAREN' }
 
 pat_range ::= lit_or_path [ DOTDOTDOT lit_or_path ]
 
@@ -516,10 +516,10 @@ private crate_name ::= IDENTIFIER alias?
 mod_decl_item ::= MOD IDENTIFIER SEMICOLON
 
 mod_item ::= MOD IDENTIFIER LBRACE inner_attrs? item * RBRACE {
-  pin(".*") = 1
+  pin = "LBRACE"
 }
 
-foreign_mod_item ::= EXTERN abi? LBRACE inner_attrs? foreign_items? RBRACE
+foreign_mod_item ::= EXTERN abi? LBRACE inner_attrs? foreign_items? RBRACE { pin = "LBRACE" }
 
 private foreign_items ::= foreign_item +
 
@@ -541,18 +541,18 @@ private struct_tuple_fields ::= struct_tuple_field (COMMA struct_tuple_field)*
 
 struct_tuple_field ::= attrs_and_vis type_sum
 
-struct_decl_args ::= LBRACE struct_decl_fields COMMA? RBRACE { pin=1 }
+struct_decl_args ::= LBRACE struct_decl_fields COMMA? RBRACE { pin = 1 }
 
 private struct_decl_fields ::= [ struct_decl_field (COMMA struct_decl_field)* ]
 
-struct_decl_field ::= attrs_and_vis IDENTIFIER COLON type_sum { pin=2 }
+struct_decl_field ::= attrs_and_vis IDENTIFIER COLON type_sum { pin = 2 }
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Enum
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-enum_item ::= ENUM IDENTIFIER generic_params where_clause? LBRACE enum_defs? COMMA? RBRACE
+enum_item ::= ENUM IDENTIFIER generic_params where_clause? LBRACE enum_defs? COMMA? RBRACE { pin = "LBRACE" }
 
 private enum_defs ::= enum_def (COMMA enum_def)*
 
@@ -567,7 +567,9 @@ enum_args ::= LBRACE struct_decl_fields COMMA? RBRACE
 // Trait
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-trait_item ::= UNSAFE? TRAIT IDENTIFIER generic_params? for_sized? type_param_bounds? where_clause? LBRACE trait_contents* RBRACE
+trait_item ::= UNSAFE? TRAIT IDENTIFIER generic_params? for_sized? type_param_bounds? where_clause? LBRACE trait_contents* RBRACE {
+  pin = "LBRACE"
+}
 
 for_sized ::= FOR Q IDENTIFIER
             | FOR IDENTIFIER Q
@@ -913,7 +915,9 @@ struct_expr ::= << checkStructAllowed >> path_generic_args_with_colons struct_ex
 struct_expr_body ::= LBRACE
                        [ <<comma_separated_list (IDENTIFIER COLON any_expr)>> ]
                        (DOTDOT  any_expr)?
-                     RBRACE
+                     RBRACE {
+  pin(".*") = "LBRACE"
+}
 
 path_expr ::= path_generic_args_with_colons
 
@@ -931,14 +935,14 @@ scoped_for_decl ::= pat IN no_struct_lit_expr
 
 for_expr ::= [lifetime COLON] FOR scoped_for_decl block { pin = "IN" }
 
-match_expr ::= MATCH no_struct_lit_expr LBRACE match_arm* RBRACE
+match_expr ::= MATCH no_struct_lit_expr LBRACE match_arm* RBRACE { pin = "LBRACE" }
 
 match_arm ::= outer_attrs* match_pat FAT_ARROW (block_expr COMMA? | any_expr (COMMA | &RBRACE))
 match_pat ::= pat (OR pat)* (IF any_expr)?
 
 if_expr ::= IF no_struct_lit_expr block else_tail?
 
-private else_tail ::= ELSE (if_expr | if_let_expr | block )
+private else_tail ::= ELSE (if_expr | if_let_expr | block)
 
 fake scoped_let_expr ::= scoped_let_decl EQ no_struct_lit_expr block
 
@@ -1006,7 +1010,7 @@ pat_macro  ::= IDENTIFIER EXCL macro_arg
 
 macro_arg ::= LPAREN token_tree? RPAREN
             | LBRACE token_tree? RBRACE
-            | LBRACK token_tree?  RBRACK {pin=1}
+            | LBRACK token_tree?  RBRACK { pin(".*") = 1 }
 
 // This "parses" both macro definitions and macro usage
 item_macro ::= IDENTIFIER EXCL IDENTIFIER?
@@ -1059,7 +1063,7 @@ let_decl ::= LET pat [ COLON type ] [ EQ restricted_expr ] SEMICOLON
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 block ::= LBRACE stmt_* restricted_expr? RBRACE {
-  pin(".*")=1
+  pin(".*") = 1
 }
 
 inner_attrs_and_block ::= LBRACE inner_attrs? stmt_* restricted_expr? RBRACE {
