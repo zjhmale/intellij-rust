@@ -1,63 +1,61 @@
 package org.rust.cargo.project.settings.controls
 
 import com.intellij.openapi.externalSystem.service.settings.AbstractExternalProjectSettingsControl
+import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil
 import com.intellij.openapi.externalSystem.util.PaintAwarePanel
 import com.intellij.openapi.options.ConfigurationException
-import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ui.configuration.JdkComboBox
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
+import com.intellij.openapi.util.Conditions
+import com.intellij.ui.components.JBLabel
+import org.rust.cargo.project.RustSdkType
 import org.rust.cargo.project.settings.CargoProjectSettings
-import org.rust.cargo.project.settings.controls.builders.CargoProjectSettingsControlBuilder
-import org.rust.cargo.project.settings.controls.builders.CargoProjectSettingsControlBuilderImpl
+import java.awt.GridBagConstraints
+import javax.swing.JButton
 
-class CargoProjectSettingsControl(private val myBuilder: CargoProjectSettingsControlBuilder)
-    : AbstractExternalProjectSettingsControl<CargoProjectSettings>(
-        null,
-        myBuilder.getInitialSettings(),
-        myBuilder.getExternalSystemSettingsControlCustomizer()) {
+class CargoProjectSettingsControl(settings: CargoProjectSettings)
+    : AbstractExternalProjectSettingsControl<CargoProjectSettings>(settings) {
 
-    constructor(initialSettings: CargoProjectSettings) : this(CargoProjectSettingsControlBuilderImpl(initialSettings)) {
+    private lateinit var sdkComboBox: JdkComboBox
+
+    init  {
+        println("init")
     }
 
     override fun fillExtraControls(content: PaintAwarePanel, indentLevel: Int) {
-        myBuilder.createAndFillControls(content, indentLevel)
-    }
+        println("fill extra controlls")
+        val sdkModel = ProjectSdksModel().apply { reset(project) }
+        sdkComboBox = JdkComboBox(sdkModel, Conditions.equalTo(RustSdkType.INSTANCE)).apply {
+            setSetupButton(JButton("New..."), project, sdkModel, null, null, false)
+        }
 
-    @Throws(ConfigurationException::class)
-    override fun validate(settings: CargoProjectSettings): Boolean {
-        return myBuilder.validate(settings)
-    }
-
-    override fun applyExtraSettings(settings: CargoProjectSettings) {
-        myBuilder.apply(settings)
-    }
-
-    override fun updateInitialExtraSettings() {
-        myBuilder.apply(initialSettings)
-    }
-
-    override fun isExtraSettingModified(): Boolean {
-        return myBuilder.isModified()
+        with(content) {
+            add(JBLabel("Rust SDK:"), ExternalSystemUiUtil.getLabelConstraints(indentLevel))
+            add(sdkComboBox, ExternalSystemUiUtil.getFillLineConstraints(0).coverLine(GridBagConstraints.RELATIVE))
+            add(sdkComboBox.setUpButton, ExternalSystemUiUtil.getFillLineConstraints(0))
+        }
     }
 
     override fun resetExtraSettings(isDefaultModuleCreation: Boolean) {
-        myBuilder.reset(project, initialSettings, isDefaultModuleCreation)
+        // This does not work ;(
+        // If you open import dialog `n` times in a row, you'll see `n` "no SDK" options
+        sdkComboBox.reloadModel(JdkComboBox.NoneJdkComboBoxItem(), project)
     }
 
-    fun update(linkedProjectPath: String?, isDefaultModuleCreation: Boolean) {
-        myBuilder.update(linkedProjectPath, initialSettings, isDefaultModuleCreation)
+    override fun validate(settings: CargoProjectSettings): Boolean {
+        println("validate")
+        if (currentCargoHome == null) {
+            throw ConfigurationException("Select a Rust SDK")
+        }
+        return true
     }
 
-    override fun showUi(show: Boolean) {
-        super.showUi(show)
-        myBuilder.showUi(show)
+    override fun applyExtraSettings(settings: CargoProjectSettings) {
+        settings.cargoHome = currentCargoHome
     }
 
-    override fun setCurrentProject(project: Project?) {
-        super.setCurrentProject(project)
-        myBuilder.reset(project, initialSettings, false)
-    }
+    override fun isExtraSettingModified(): Boolean =
+        initialSettings.cargoHome != currentCargoHome
 
-    override fun disposeUIResources() {
-        super.disposeUIResources()
-        myBuilder.disposeUIResources()
-    }
+    private val currentCargoHome: String? get() = sdkComboBox.selectedJdk?.homePath
 }
